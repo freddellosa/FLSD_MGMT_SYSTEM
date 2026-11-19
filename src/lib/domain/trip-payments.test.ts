@@ -1,0 +1,24 @@
+﻿import { describe, expect, it } from 'vitest';
+import { acceptRemittance, assertAllocationReversal, assertPaymentVoid, assertRefundReservation, assertTripAllocation, assertTripScope, classifyReceipt, moneyGuard, refundTransition, reservesRefund, MAX_CENTAVOS } from './trip-payments';
+const snapshot = { receivedCentavos: 10000n, allocationsCentavos: 6000n, completedRefundsCentavos: 1000n, pendingRefundsCentavos: 1000n };
+describe('Unified trip payment guards', () => {
+  it.each(['ADVANCE', 'DEPOSIT'] as const)('keeps %s separate from settlement', purpose => expect(classifyReceipt(12000n, 10000n, purpose)).toEqual({applied:0n,advance:10000n,excess:2000n}));
+  it('classifies partial and excess settlement precisely', () => { expect(classifyReceipt(4000n,10000n,'SETTLEMENT').applied).toBe(4000n); expect(classifyReceipt(7000n,6000n,'SETTLEMENT').excess).toBe(1000n); });
+  it('rejects cross-trip funds even for same customer', () => expect(() => assertTripScope({customerId:'c',restrictedTripId:'a'},{id:'b',customerId:'c'})).toThrow('another trip'));
+  it('rejects cross-customer funds', () => expect(() => assertTripScope({customerId:'a',restrictedTripId:null},{id:'t',customerId:'b'})).toThrow('Cross-customer'));
+  it('allows same-trip funds', () => expect(() => assertTripScope({customerId:'c',restrictedTripId:'t'},{id:'t',customerId:'c'})).not.toThrow());
+  it('blocks over-allocation', () => expect(() => assertTripAllocation(snapshot,2000n,1000n,0n)).toThrow('balance'));
+  it('never allocates refund-only or reserved funds', () => { expect(() => assertTripAllocation(snapshot,2000n,5000n,1000n)).toThrow('refund-only'); expect(() => assertTripAllocation(snapshot,3000n,5000n,0n)).toThrow(); });
+  it('allows remaining advance allocation', () => expect(() => assertTripAllocation(snapshot,1000n,5000n,1000n)).not.toThrow());
+  it('blocks duplicate reservation spending', () => expect(() => assertRefundReservation(snapshot,3000n,4000n)).toThrow());
+  it('reserves uncertain refunds until reconciled', () => { expect(reservesRefund('RECONCILIATION_REQUIRED')).toBe(true); expect(reservesRefund('FAILED')).toBe(false); });
+  it.each(['OWNER','ADMIN','BILLING'])('permits %s approval', role => expect(refundTransition('REQUESTED','APPROVED',role)).toBe('APPROVED'));
+  it.each(['OPERATIONS','VIEWER','unknown'])('denies %s refund approval', role => expect(() => refundTransition('REQUESTED','APPROVED',role)).toThrow('Only'));
+  it('blocks duplicate payout and skipping approval', () => { expect(() => refundTransition('COMPLETED','COMPLETED','OWNER')).toThrow(); expect(() => refundTransition('REQUESTED','COMPLETED','OWNER')).toThrow(); });
+  it('bounds reversals by unreversed original', () => { expect(() => assertAllocationReversal(1000n,500n,600n)).toThrow(); expect(() => assertAllocationReversal(1000n,500n,500n)).not.toThrow(); });
+  it('prevents voiding real cash dependencies', () => expect(() => assertPaymentVoid({allocated:0n,reserved:0n,refunded:0n,hasCustodyHistory:true})).toThrow());
+  it('allows dependency-free correction', () => expect(() => assertPaymentVoid({allocated:0n,reserved:0n,refunded:0n,hasCustodyHistory:false})).not.toThrow());
+  it('accepts partial counted cash without changing client settlement', () => expect(acceptRemittance('TENDERED',3000n,2000n,3000n)).toBe('PARTIAL'));
+  it('rejects duplicate remittance and excess count', () => { expect(() => acceptRemittance('ACCEPTED',3000n,1000n,3000n)).toThrow(); expect(() => acceptRemittance('TENDERED',3000n,4000n,3000n)).toThrow(); });
+  it('validates exact storage limits and positive amounts', () => { expect(() => moneyGuard(MAX_CENTAVOS+1n)).toThrow(); expect(() => classifyReceipt(0n,100n,'DEPOSIT')).toThrow(); });
+});

@@ -1,0 +1,665 @@
+{
+    "kind":  "NORMALIZED_IMPORT_SNAPSHOT_CONTRACT",
+    "version":  "NS-1",
+    "status":  "PROPOSED_OFFLINE_VALIDATOR_IMPLEMENTED_NOT_APPROVED",
+    "importEnabled":  false,
+    "executionAuthorized":  false,
+    "fieldMapSha256":  "6e7aeaae8454c4444bd5543acb4d2152e910c0e25ef05efb3a622171dd4ef644",
+    "identityFields":  [
+                           "namespace",
+                           "kind",
+                           "key"
+                       ],
+    "recordMetadata":  [
+                           "sourceFileId",
+                           "logicalRow",
+                           "sourceEvidenceSha256",
+                           "reviewState",
+                           "pending"
+                       ],
+    "slotStates":  [
+                       "VALUE",
+                       "BLANK",
+                       "UNKNOWN",
+                       "NOT_PRESENT",
+                       "NOT_APPLICABLE"
+                   ],
+    "moneyEncoding":  "CANONICAL_NONNEGATIVE_INTEGER_CENTAVO_STRING",
+    "versionEncoding":  "CANONICAL_NONNEGATIVE_BIGINT_STRING",
+    "requiredMappingSlots": ["applicationEntityId", "expectedEntityVersion", "mappingReviewState"],
+    "requiredSemanticSlots": {
+        "Driver_tbl": [],
+        "vehicle_tbl": [],
+        "company_tbl": ["reviewedVatClassification"],
+        "Trips_Tbl": ["reviewedWorkflow", "reviewedVatBasis", "reviewedVatTreatment", "reviewedReceivableState"],
+        "SOA_Tbl": ["reviewedCustomerSourceIdentity", "reviewedTripMemberships", "operationalLifecycleState"],
+        "Invoice_Tbl": ["reviewedCustomerSourceIdentity", "reviewedTripMemberships", "operationalLifecycleState", "reviewedReceivableState"]
+    },
+    "tables":  [
+                   {
+                       "sourceTable":  "Driver_tbl",
+                       "sourceKey":  "DriverID",
+                       "requiredEvidenceSlots":  [
+                                                     "evidence.DriverID",
+                                                     "evidence.DriverName",
+                                                     "evidence.LastName",
+                                                     "evidence.FirstName",
+                                                     "evidence.MiddleName",
+                                                     "evidence.HireDate",
+                                                     "evidence.isActv"
+                                                 ],
+                       "excludedFields":  [
+                                              "SSSNo",
+                                              "SSS_Rate"
+                                          ],
+                       "typedSlots":  [
+                                          {
+                                              "slot":  "facts.drivers.display_name",
+                                              "sourceField":  "DriverName",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.drivers.last_name",
+                                              "sourceField":  "LastName",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.drivers.first_name",
+                                              "sourceField":  "FirstName",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.drivers.middle_name",
+                                              "sourceField":  "MiddleName",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.drivers.hire_date",
+                                              "sourceField":  "HireDate",
+                                              "proposedType":  "DATE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.drivers.active",
+                                              "sourceField":  "isActv",
+                                              "proposedType":  "BOOLEAN",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          }
+                                      ],
+                       "referenceSlots":  [
+
+                                          ]
+                   },
+                   {
+                       "sourceTable":  "vehicle_tbl",
+                       "sourceKey":  "VehicleID",
+                       "requiredEvidenceSlots":  [
+                                                     "evidence.VehicleID",
+                                                     "evidence.MakeModel",
+                                                     "evidence.VehicleType",
+                                                     "evidence.PlateNo",
+                                                     "evidence.Color",
+                                                     "evidence.NoOfSeats",
+                                                     "evidence.Active",
+                                                     "evidence.FuelType"
+                                                 ],
+                       "excludedFields":  [
+
+                                          ],
+                       "typedSlots":  [
+                                          {
+                                              "slot":  "facts.vehicles.make_model",
+                                              "sourceField":  "MakeModel",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.vehicles.vehicle_type",
+                                              "sourceField":  "VehicleType",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.vehicles.plate_number",
+                                              "sourceField":  "PlateNo",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.vehicles.color",
+                                              "sourceField":  "Color",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.vehicles.seat_count",
+                                              "sourceField":  "NoOfSeats",
+                                              "proposedType":  "INTEGER",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.vehicles.active",
+                                              "sourceField":  "Active",
+                                              "proposedType":  "BOOLEAN",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.vehicles.fuel_type",
+                                              "sourceField":  "FuelType",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          }
+                                      ],
+                       "referenceSlots":  [
+
+                                          ]
+                   },
+                   {
+                       "sourceTable":  "company_tbl",
+                       "sourceKey":  "CompanyID",
+                       "requiredEvidenceSlots":  [
+                                                     "evidence.CompanyID",
+                                                     "evidence.CompanyName",
+                                                     "evidence.CompanyAddress",
+                                                     "evidence.TIN",
+                                                     "evidence.BusinessStyle",
+                                                     "evidence.NeedRequestor",
+                                                     "evidence.NeedPO"
+                                                 ],
+                       "excludedFields":  [
+
+                                          ],
+                       "typedSlots":  [
+                                          {
+                                              "slot":  "facts.customers.registered_name",
+                                              "sourceField":  "CompanyName",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.customers.billing_address",
+                                              "sourceField":  "CompanyAddress",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.customers.tin",
+                                              "sourceField":  "TIN",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.customers.business_style",
+                                              "sourceField":  "BusinessStyle",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.customers.requires_requestor",
+                                              "sourceField":  "NeedRequestor",
+                                              "proposedType":  "BOOLEAN",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.customers.requires_po",
+                                              "sourceField":  "NeedPO",
+                                              "proposedType":  "BOOLEAN",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          }
+                                      ],
+                       "referenceSlots":  [
+
+                                          ]
+                   },
+                   {
+                       "sourceTable":  "Trips_Tbl",
+                       "sourceKey":  "tmpInvoiceNo",
+                       "requiredEvidenceSlots":  [
+                                                     "evidence.tmpInvoiceNo",
+                                                     "evidence.CompanyID",
+                                                     "evidence.VehicleID",
+                                                     "evidence.DriverID",
+                                                     "evidence.InvoiceDate",
+                                                     "evidence.ChargeTo",
+                                                     "evidence.MakeModel",
+                                                     "evidence.PlateNo",
+                                                     "evidence.DriverName",
+                                                     "evidence.DateOfTrip_Start",
+                                                     "evidence.DateOfTrip_End",
+                                                     "evidence.ServiceType",
+                                                     "evidence.Passenger",
+                                                     "evidence.Dept",
+                                                     "evidence.ReservedBy",
+                                                     "evidence.Destination",
+                                                     "evidence.ChargeLocation",
+                                                     "evidence.Amount",
+                                                     "evidence.AdminFee",
+                                                     "evidence.Evat",
+                                                     "evidence.Gas",
+                                                     "evidence.TollFee",
+                                                     "evidence.ParkingFee",
+                                                     "evidence.FoodExp",
+                                                     "evidence.Lodging",
+                                                     "evidence.NightDiff",
+                                                     "evidence.Odo_IN",
+                                                     "evidence.Odo_OUT",
+                                                     "evidence.InvoiceTotAmt",
+                                                     "evidence.AprvDate",
+                                                     "evidence.RcvdDate",
+                                                     "evidence.CheckDate",
+                                                     "evidence.CheckNo",
+                                                     "evidence.CheckAmt",
+                                                     "evidence.Status",
+                                                     "evidence.Remarks",
+                                                     "evidence.UpdtDt",
+                                                     "evidence.ApprovedBy",
+                                                     "evidence.SOANo",
+                                                     "evidence.TEMPSOANo",
+                                                     "evidence.WorkDays",
+                                                     "evidence.BaseAmount",
+                                                     "evidence.TotHrs",
+                                                     "evidence.OTHrs",
+                                                     "evidence.OTHrsAmt",
+                                                     "evidence.OTRatePerHr",
+                                                     "evidence.OTFee",
+                                                     "evidence.LitersConsumed",
+                                                     "evidence.TotKMs",
+                                                     "evidence.FuelRatePerLtr",
+                                                     "evidence.ZuelligMeal",
+                                                     "evidence.Week_of_Service",
+                                                     "evidence.ACN_Transpo_Coor",
+                                                     "evidence.Vendor_Name",
+                                                     "evidence.Service_Month",
+                                                     "evidence.InvoiceNo_LGINo",
+                                                     "evidence.Trip_Ticket",
+                                                     "evidence.REF_SRNumber",
+                                                     "evidence.Requester",
+                                                     "evidence.Approver",
+                                                     "evidence.Date_of_Service",
+                                                     "evidence.Origin",
+                                                     "evidence.Origin_City",
+                                                     "evidence.Destination_ACN",
+                                                     "evidence.Destination_City",
+                                                     "evidence.Area",
+                                                     "evidence.Region",
+                                                     "evidence.Type_of_Service",
+                                                     "evidence.Purpose",
+                                                     "evidence.Other_Purpose",
+                                                     "evidence.People_Asset",
+                                                     "evidence.Description",
+                                                     "evidence.Workforce",
+                                                     "evidence.ProjectName",
+                                                     "evidence.WBS",
+                                                     "evidence.PassengerName",
+                                                     "evidence.Driver_Name",
+                                                     "evidence.VehicleModel",
+                                                     "evidence.VehicleType",
+                                                     "evidence.VehicleClass",
+                                                     "evidence.Plate_No",
+                                                     "evidence.Total_No_Trips",
+                                                     "evidence.Total_No_Passengers",
+                                                     "evidence.Odo_Start",
+                                                     "evidence.Odo_End",
+                                                     "evidence.Total_KM",
+                                                     "evidence.Time_Started",
+                                                     "evidence.Time_Ended",
+                                                     "evidence.Total_No_ServiceHrs",
+                                                     "evidence.TIME_IN_WORDS",
+                                                     "evidence.Actual_OT_Minutes",
+                                                     "evidence.Total_OT",
+                                                     "evidence.OTRate_Hr",
+                                                     "evidence.Fuel_Consumed",
+                                                     "evidence.Fuel_Rate_PerLiter",
+                                                     "evidence.Fuel_Type",
+                                                     "evidence.TotHrs_WaitingTime",
+                                                     "evidence.WaitingTime_Rate_PerHr",
+                                                     "evidence.Rental_Fee",
+                                                     "evidence.Fuel_Charge",
+                                                     "evidence.Total_OT_Charge",
+                                                     "evidence.Night_Diff",
+                                                     "evidence.MealAllowance",
+                                                     "evidence.LodgingCharge",
+                                                     "evidence.WaitingTime_Charge",
+                                                     "evidence.Total_TollFee",
+                                                     "evidence.Total_ParkingFee",
+                                                     "evidence.Total_OtherFees",
+                                                     "evidence.VAT",
+                                                     "evidence.Total_VatableAmt",
+                                                     "evidence.VAT_Amount",
+                                                     "evidence.Total_NonVat_Amount",
+                                                     "evidence.TotalCharge",
+                                                     "evidence.CostPerPerson",
+                                                     "evidence.SpecialRate",
+                                                     "evidence.Remarks_ACN",
+                                                     "evidence.Less_wh_tx"
+                                                 ],
+                       "excludedFields":  [
+
+                                          ],
+                       "typedSlots":  [
+                                          {
+                                              "slot":  "facts.trips.service_start_local",
+                                              "sourceField":  "DateOfTrip_Start",
+                                              "proposedType":  "TIMESTAMP WITHOUT TIME ZONE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.service_end_local",
+                                              "sourceField":  "DateOfTrip_End",
+                                              "proposedType":  "TIMESTAMP WITHOUT TIME ZONE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.service_type",
+                                              "sourceField":  "ServiceType",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.passenger_name",
+                                              "sourceField":  "Passenger",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.department",
+                                              "sourceField":  "Dept",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.reserved_by",
+                                              "sourceField":  "ReservedBy",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.destination",
+                                              "sourceField":  "Destination",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.charge_location",
+                                              "sourceField":  "ChargeLocation",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.recorded_vat",
+                                              "sourceField":  "Evat",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "RECORDED_TAX_EVIDENCE"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.fuel_amount",
+                                              "sourceField":  "Gas",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.toll_amount",
+                                              "sourceField":  "TollFee",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.parking_amount",
+                                              "sourceField":  "ParkingFee",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.meal_amount",
+                                              "sourceField":  "FoodExp",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.lodging_amount",
+                                              "sourceField":  "Lodging",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.agreed_gross",
+                                              "sourceField":  "InvoiceTotAmt",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_RECORDED_GROSS"
+                                          },
+                                          {
+                                              "slot":  "facts.trips.remarks",
+                                              "sourceField":  "Remarks",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.base_amount",
+                                              "sourceField":  "BaseAmount",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          },
+                                          {
+                                              "slot":  "facts.trip_charges.ot_amount",
+                                              "sourceField":  "OTFee",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_COMPONENT_REVIEW"
+                                          }
+                                      ],
+                       "referenceSlots":  [
+                                              {
+                                                  "slot":  "references.CompanyID",
+                                                  "sourceField":  "CompanyID",
+                                                  "disposition":  "RESOLVE_SOURCE_FK"
+                                              },
+                                              {
+                                                  "slot":  "references.VehicleID",
+                                                  "sourceField":  "VehicleID",
+                                                  "disposition":  "RESOLVE_SOURCE_FK"
+                                              },
+                                              {
+                                                  "slot":  "references.DriverID",
+                                                  "sourceField":  "DriverID",
+                                                  "disposition":  "RESOLVE_SOURCE_FK"
+                                              },
+                                              {
+                                                  "slot":  "references.SOANo",
+                                                  "sourceField":  "SOANo",
+                                                  "disposition":  "REVIEW_MEMBERSHIP"
+                                              }
+                                          ]
+                   },
+                   {
+                       "sourceTable":  "SOA_Tbl",
+                       "sourceKey":  "SOANo",
+                       "requiredEvidenceSlots":  [
+                                                     "evidence.SOANo",
+                                                     "evidence.DateCreated",
+                                                     "evidence.ChargeTo",
+                                                     "evidence.ChargeTo_Add",
+                                                     "evidence.ChargeTo_TIN",
+                                                     "evidence.PONo",
+                                                     "evidence.Status",
+                                                     "evidence.ApprovedDate",
+                                                     "evidence.ReceivedDate",
+                                                     "evidence.InvoiceNo",
+                                                     "evidence.InvoiceDate",
+                                                     "evidence.UpdateDate",
+                                                     "evidence.Dept",
+                                                     "evidence.Requestor",
+                                                     "evidence.Site"
+                                                 ],
+                       "excludedFields":  [
+
+                                          ],
+                       "typedSlots":  [
+                                          {
+                                              "slot":  "facts.statements_of_account.created_date_local",
+                                              "sourceField":  "DateCreated",
+                                              "proposedType":  "TIMESTAMP WITHOUT TIME ZONE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.original_customer_name",
+                                              "sourceField":  "ChargeTo",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.original_customer_address",
+                                              "sourceField":  "ChargeTo_Add",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.original_customer_tin",
+                                              "sourceField":  "ChargeTo_TIN",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.po_number",
+                                              "sourceField":  "PONo",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.source_status",
+                                              "sourceField":  "Status",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.approved_date_local",
+                                              "sourceField":  "ApprovedDate",
+                                              "proposedType":  "TIMESTAMP WITHOUT TIME ZONE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.received_date_local",
+                                              "sourceField":  "ReceivedDate",
+                                              "proposedType":  "TIMESTAMP WITHOUT TIME ZONE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.department",
+                                              "sourceField":  "Dept",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.requestor",
+                                              "sourceField":  "Requestor",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.statements_of_account.site",
+                                              "sourceField":  "Site",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          }
+                                      ],
+                       "referenceSlots":  [
+                                              {
+                                                  "slot":  "references.InvoiceNo",
+                                                  "sourceField":  "InvoiceNo",
+                                                  "disposition":  "REVIEW_DOCUMENT_LINK"
+                                              }
+                                          ]
+                   },
+                   {
+                       "sourceTable":  "Invoice_Tbl",
+                       "sourceKey":  "InvoiceNo",
+                       "requiredEvidenceSlots":  [
+                                                     "evidence.InvoiceNo",
+                                                     "evidence.InvoiceDate",
+                                                     "evidence.ChargeTo",
+                                                     "evidence.MakeModel",
+                                                     "evidence.PlateNo",
+                                                     "evidence.DriverName",
+                                                     "evidence.DateOfTrip_Start",
+                                                     "evidence.DateOfTrip_End",
+                                                     "evidence.ServiceType",
+                                                     "evidence.Passenger",
+                                                     "evidence.Dept",
+                                                     "evidence.ReservedBy",
+                                                     "evidence.Destination",
+                                                     "evidence.ChargeLocation",
+                                                     "evidence.Amount",
+                                                     "evidence.AdminFee",
+                                                     "evidence.Evat",
+                                                     "evidence.Gas",
+                                                     "evidence.TollFee",
+                                                     "evidence.ParkingFee",
+                                                     "evidence.FoodExp",
+                                                     "evidence.Lodging",
+                                                     "evidence.NightDiff",
+                                                     "evidence.Odo_IN",
+                                                     "evidence.Odo_OUT",
+                                                     "evidence.InvoiceTotAmt",
+                                                     "evidence.AprvDate",
+                                                     "evidence.RcvdDate",
+                                                     "evidence.CheckDate",
+                                                     "evidence.CheckNo",
+                                                     "evidence.CheckAmt",
+                                                     "evidence.Status",
+                                                     "evidence.Remarks",
+                                                     "evidence.UpdtDt",
+                                                     "evidence.ApprovedBy",
+                                                     "evidence.tmpInvoiceDate",
+                                                     "evidence.SOANo",
+                                                     "evidence.ORNo",
+                                                     "evidence.PONo",
+                                                     "evidence.ZuelligMeal",
+                                                     "evidence.Less_wh_tx"
+                                                 ],
+                       "excludedFields":  [
+
+                                          ],
+                       "typedSlots":  [
+                                          {
+                                              "slot":  "facts.invoices.source_invoice_date_local",
+                                              "sourceField":  "InvoiceDate",
+                                              "proposedType":  "TIMESTAMP WITHOUT TIME ZONE",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.invoices.original_customer_name",
+                                              "sourceField":  "ChargeTo",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          },
+                                          {
+                                              "slot":  "facts.invoices.recorded_vat",
+                                              "sourceField":  "Evat",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "RECORDED_TAX_EVIDENCE"
+                                          },
+                                          {
+                                              "slot":  "facts.invoices.recorded_gross",
+                                              "sourceField":  "InvoiceTotAmt",
+                                              "proposedType":  "NUMERIC(18,2)",
+                                              "disposition":  "EXACT_RECORDED_GROSS"
+                                          },
+                                          {
+                                              "slot":  "facts.invoices.source_status",
+                                              "sourceField":  "Status",
+                                              "proposedType":  "TEXT",
+                                              "disposition":  "TYPED_AFTER_VALIDATION"
+                                          }
+                                      ],
+                       "referenceSlots":  [
+                                              {
+                                                  "slot":  "references.SOANo",
+                                                  "sourceField":  "SOANo",
+                                                  "disposition":  "REVIEW_DOCUMENT_LINK"
+                                              }
+                                          ]
+                   }
+               ]
+}

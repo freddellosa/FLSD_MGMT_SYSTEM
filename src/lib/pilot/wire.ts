@@ -1,0 +1,5 @@
+/** Exact wire encoding; no currency number conversions. */
+export function encodeWire(value:unknown){return JSON.stringify(value,(_,v)=>typeof v==='bigint'?{$centavos:v.toString()}:v);}
+export function decodeWire<T=unknown>(text:string):T{if(text.length>16*1024*1024)throw new Error('Request too large');const value=JSON.parse(text,(key,v)=>{if(['__proto__','prototype','constructor'].includes(key))throw new Error('Invalid input key');if(v&&typeof v==='object'&&!Array.isArray(v)&&Object.hasOwn(v,'$centavos')){if(Object.keys(v).length!==1||typeof v.$centavos!=='string'||!/^\d{1,18}$/.test(v.$centavos))throw new Error('Invalid money encoding');return BigInt(v.$centavos);}return v;});let count=0;function check(v:unknown,depth:number){if(++count>200000||depth>30)throw new Error('Input complexity exceeded');if(v&&typeof v==='object')for(const child of Object.values(v))check(child,depth+1);}check(value,0);return value as T;}
+
+export function canonicalWire(value:unknown){return JSON.stringify(value,(_,v)=>typeof v==='bigint'?{$centavos:v.toString()}:v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);}

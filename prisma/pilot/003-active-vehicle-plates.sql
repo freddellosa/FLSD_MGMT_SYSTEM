@@ -1,0 +1,1 @@
+BEGIN; ALTER TABLE pilot_vehicles DROP CONSTRAINT pilot_vehicles_plate_key; CREATE UNIQUE INDEX pilot_active_vehicle_plate ON pilot_vehicles(plate) WHERE archived=false; UPDATE pilot_meta SET schema_version=3 WHERE id=1; COMMIT;

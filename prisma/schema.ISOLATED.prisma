@@ -1,0 +1,319 @@
+// DRAFT V1 domain model. Do not apply to production before review and reconciliation.
+// All financial values are decimal; original legacy values are preserved separately.
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/batch7-client"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+enum StaffRole {
+  OWNER
+  ADMIN
+  BILLING
+  OPERATIONS
+  VIEWER
+}
+enum InvoiceState {
+  DRAFT
+  PRINT_PENDING
+  PRINTED
+  CANCELLED
+  SPOILED
+}
+enum SoaState {
+  DRAFT
+  ISSUED
+  CANCELLED
+}
+enum PaymentState {
+  RECORDED
+  VOIDED
+}
+enum ImportState {
+  VALIDATED
+  APPLIED
+  REJECTED
+}
+
+model StaffUser {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  displayName String
+  passwordHash String
+  role StaffRole @default(VIEWER)
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  auditEvents AuditEvent[]
+}
+model Customer {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  normalizedName String @unique
+  tin String?
+  billingAddress String?
+  includeInManagementRevenue Boolean @default(true)
+  active Boolean @default(true)
+  trips Trip[]
+  soas StatementOfAccount[]
+  invoices OfficialInvoice[]
+  payments Payment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Vehicle {
+  id String @id @default(uuid()) @db.Uuid
+  plateNumber String @unique
+  description String
+  active Boolean @default(true)
+  trips Trip[]
+}
+model Driver {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  employeeCode String? @unique
+  active Boolean @default(true)
+  trips Trip[]
+}
+model Trip {
+  id String @id @default(uuid()) @db.Uuid
+  legacyTripId String? @unique
+  tripStart DateTime
+  tripEnd DateTime?
+  customerId String @db.Uuid
+  customer Customer @relation(fields:[customerId],references:[id])
+  vehicleId String? @db.Uuid
+  vehicle Vehicle? @relation(fields:[vehicleId],references:[id])
+  driverId String? @db.Uuid
+  driver Driver? @relation(fields:[driverId],references:[id])
+  passengerName String?
+  origin String?
+  destination String?
+  serviceType String?
+  tripStatus String?
+  chargeAmount Decimal @db.Decimal(18,2)
+  vatAmount Decimal? @db.Decimal(18,2)
+  withholdingAmount Decimal? @db.Decimal(18,2)
+  legacySoaNumber String?
+  legacyPayload Json?
+  soaItems SoaTrip[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([tripStart])
+  @@index([customerId,tripStart])
+}
+model StatementOfAccount {
+  id String @id @default(uuid()) @db.Uuid
+  soaNumber String @unique
+  customerId String @db.Uuid
+  customer Customer @relation(fields:[customerId],references:[id])
+  status SoaState @default(DRAFT)
+  issuedAt DateTime?
+  legacyStatus String?
+  poNumber String?
+  department String?
+  requestor String?
+  site String?
+  items SoaTrip[]
+  invoices OfficialInvoice[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model SoaTrip {
+  soaId String @db.Uuid
+  tripId String @db.Uuid
+  soa StatementOfAccount @relation(fields:[soaId],references:[id])
+  trip Trip @relation(fields:[tripId],references:[id])
+  amountAtBilling Decimal @db.Decimal(18,2)
+  releasedAt DateTime? // null means reserved; release only after reconciliation
+  releaseReason String?
+  @@id([soaId,tripId])
+  // A trip may appear in only one active SOA; enforce through transactional business logic.
+  @@index([tripId])
+}
+model OfficialInvoice {
+  id String @id @default(uuid()) @db.Uuid
+  soaId String @db.Uuid
+  soa StatementOfAccount @relation(fields:[soaId],references:[id])
+  customerId String @db.Uuid
+  customer Customer @relation(fields:[customerId],references:[id])
+  serialNumber String? @unique
+  state InvoiceState @default(DRAFT)
+  invoiceDate DateTime?
+  printedAt DateTime?
+  cancelledAt DateTime?
+  cancellationReason String?
+  replacedInvoiceId String? @unique @db.Uuid
+  replacedInvoice OfficialInvoice? @relation("InvoiceReplacement",fields:[replacedInvoiceId],references:[id])
+  replacement OfficialInvoice? @relation("InvoiceReplacement")
+  grossAmount Decimal @db.Decimal(18,2)
+  vatAmount Decimal @db.Decimal(18,2)
+  withholdingAmount Decimal @default(0) @db.Decimal(18,2)
+  legacyInvoiceNumber String?
+  payments PaymentAllocation[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([soaId,state])
+  // Enforce at most one active issued invoice per SOA with a partial unique SQL index.
+}
+model InvoiceSerialBatch {
+  id String @id @default(uuid()) @db.Uuid
+  startSerial BigInt
+  endSerial BigInt
+  deletedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([startSerial,endSerial])
+}
+model Payment {
+  id String @id @default(uuid()) @db.Uuid
+  customerId String @db.Uuid
+  customer Customer @relation(fields:[customerId],references:[id])
+  receivedAt DateTime
+  amount Decimal @db.Decimal(18,2)
+  reference String?
+  paymentMethod String?
+  state PaymentState @default(RECORDED)
+  allocations PaymentAllocation[]
+  refunds PaymentRefund[]
+  attachments PaymentAttachment[]
+  allocationEvents PaymentAllocationEvent[]
+  financialOperations FinancialOperation[]
+  unmatchedCase UnmatchedPaymentCase?
+  duplicateOverrideReason String?
+  createdAt DateTime @default(now())
+}
+model PaymentAllocation {
+  paymentId String @db.Uuid
+  invoiceId String @db.Uuid
+  payment Payment @relation(fields:[paymentId],references:[id])
+  invoice OfficialInvoice @relation(fields:[invoiceId],references:[id])
+  amount Decimal @db.Decimal(18,2)
+  withheldTax Decimal @default(0) @db.Decimal(18,2)
+  @@id([paymentId,invoiceId])
+}
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  actorId String? @db.Uuid
+  actor StaffUser? @relation(fields:[actorId],references:[id])
+  action String
+  entityType String
+  entityId String
+  before Json?
+  after Json?
+  reason String?
+  createdAt DateTime @default(now())
+  @@index([entityType,entityId,createdAt])
+}
+model ImportBatch {
+  id String @id @default(uuid()) @db.Uuid
+  sourceName String
+  sourceSha256 String
+  status ImportState @default(VALIDATED)
+  acceptedRows Int @default(0)
+  rejectedRows Int @default(0)
+  report Json?
+  createdAt DateTime @default(now())
+  @@unique([sourceName,sourceSha256])
+}
+
+
+// REVIEW-ONLY additions. Application services must be upgraded before deployment.
+enum RefundState {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+enum AttachmentState {
+  CURRENT
+  SUPERSEDED
+  SOFT_DELETED
+}
+enum UnmatchedCaseState {
+  UNRESOLVED
+  RESOLVED
+}
+model PaymentRefund {
+  id String @id @default(uuid()) @db.Uuid
+  paymentId String @db.Uuid
+  payment Payment @relation(fields:[paymentId], references:[id])
+  amount Decimal @db.Decimal(18,2)
+  state RefundState @default(PENDING)
+  reason String
+  method String?
+  reference String?
+  createdById String @db.Uuid
+  completedAt DateTime?
+  closedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([paymentId,state])
+}
+model PaymentAttachment {
+  id String @id @default(uuid()) @db.Uuid
+  paymentId String @db.Uuid
+  payment Payment @relation(fields:[paymentId], references:[id])
+  // Relative path only, never public URL or arbitrary absolute path.
+  storageKey String @unique
+  originalFilename String
+  mimeType String
+  byteSize Int
+  sha256 String
+  state AttachmentState @default(CURRENT)
+  supersedesId String? @db.Uuid
+  replacementReason String?
+  deletedReason String?
+  createdById String @db.Uuid
+  createdAt DateTime @default(now())
+  stateChangedAt DateTime?
+  @@index([paymentId,state])
+}
+model PaymentAllocationEvent {
+  id String @id @default(uuid()) @db.Uuid
+  operationId String? @db.Uuid // nullable only for imported legacy events; new postings require a link
+  operation FinancialOperation? @relation(fields:[operationId],references:[id])
+  paymentId String @db.Uuid
+  payment Payment @relation(fields:[paymentId],references:[id])
+  invoiceId String @db.Uuid
+  // Signed cash delta; reversals are negative events, original entries retained.
+  cashDelta Decimal @db.Decimal(18,2)
+  withheldTaxDelta Decimal @default(0) @db.Decimal(18,2)
+  action String
+  reason String?
+  actorId String @db.Uuid
+  createdAt DateTime @default(now())
+  @@index([paymentId,createdAt])
+  @@index([invoiceId,createdAt])
+}
+model UnmatchedPaymentCase {
+  id String @id @default(uuid()) @db.Uuid
+  paymentId String @unique @db.Uuid
+  payment Payment @relation(fields:[paymentId],references:[id])
+  suppliedInvoiceReferences String?
+  status UnmatchedCaseState @default(UNRESOLVED)
+  resolutionNote String?
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status,createdAt])
+}
+
+// Assignment 5: durable idempotency receipt. Only committed operations belong here.
+// An idempotency key is globally unique; same-key/different-digest MUST fail closed.
+// Never persist an operation receipt without its ledger events and audit event in one transaction.
+model FinancialOperation {
+  id String @id @default(uuid()) @db.Uuid
+  idempotencyKey String @unique @db.VarChar(160)
+  requestDigest String @db.VarChar(64) // lowercase SHA-256 hex
+  operationType String @db.VarChar(40)
+  paymentId String @db.Uuid
+  payment Payment @relation(fields:[paymentId],references:[id])
+  actorId String @db.Uuid
+  allocatedCash Decimal @db.Decimal(18,2)
+  receipt Json
+  createdAt DateTime @default(now())
+  allocationEvents PaymentAllocationEvent[]
+  @@index([paymentId,createdAt])
+}

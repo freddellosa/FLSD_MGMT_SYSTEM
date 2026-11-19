@@ -1,0 +1,16 @@
+BEGIN;
+CREATE TABLE pilot_vehicles(id text PRIMARY KEY,label text NOT NULL UNIQUE,plate text NOT NULL UNIQUE,active boolean NOT NULL,archived boolean NOT NULL DEFAULT false,payload jsonb NOT NULL);
+CREATE TABLE pilot_drivers(id text PRIMARY KEY,label text NOT NULL UNIQUE,name text NOT NULL,active boolean NOT NULL,archived boolean NOT NULL DEFAULT false,payload jsonb NOT NULL);
+CREATE TABLE pilot_invoice_formats(id text PRIMARY KEY,name text NOT NULL UNIQUE,version int NOT NULL CHECK(version>0),payload jsonb NOT NULL);
+CREATE TABLE pilot_customer_formats(customer_id text PRIMARY KEY REFERENCES pilot_customers(id),format_id text NOT NULL REFERENCES pilot_invoice_formats(id));
+CREATE TABLE pilot_document_trips(document_id text NOT NULL REFERENCES pilot_documents(id),trip_id text NOT NULL REFERENCES pilot_trips(id),current_membership boolean NOT NULL,PRIMARY KEY(document_id,trip_id));
+CREATE TABLE pilot_import_batches(id text PRIMARY KEY,digest text NOT NULL,file_name text NOT NULL,state text NOT NULL,version int NOT NULL,payload jsonb NOT NULL);
+CREATE TABLE pilot_settings(id text PRIMARY KEY,payload jsonb NOT NULL);
+INSERT INTO pilot_vehicles SELECT v->>'id',v->>'label',v->>'plate',coalesce((v->>'active')::boolean,true),false,v FROM pilot_workspace w CROSS JOIN LATERAL jsonb_array_elements(w.state->'vehicles') v;
+INSERT INTO pilot_drivers SELECT v->>'id',v->>'label',v->>'name',coalesce((v->>'active')::boolean,true),false,v FROM pilot_workspace w CROSS JOIN LATERAL jsonb_array_elements(w.state->'drivers') v;
+INSERT INTO pilot_invoice_formats SELECT v->>'id',v->>'name',(v->>'version')::int,v FROM pilot_workspace w CROSS JOIN LATERAL jsonb_array_elements(w.state->'invoiceFormats') v;
+ALTER TABLE pilot_trips ADD COLUMN vehicle_key text REFERENCES pilot_vehicles(label),ADD COLUMN driver_key text REFERENCES pilot_drivers(label);
+UPDATE pilot_trips SET vehicle_key=nullif(payload->>'vehicle',''),driver_key=nullif(payload->>'driver','');
+GRANT SELECT,INSERT,UPDATE ON pilot_vehicles,pilot_drivers,pilot_invoice_formats,pilot_customer_formats,pilot_document_trips,pilot_import_batches,pilot_settings TO flsd_pilot_app;
+UPDATE pilot_meta SET schema_version=2 WHERE id=1;
+COMMIT;
