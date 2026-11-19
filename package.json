@@ -1,0 +1,59 @@
+{
+  "name": "flsd-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:check": "prisma validate",
+    "db:status": "prisma migrate status",
+    "test:pilot:db": "vitest run --config vitest.pilot.config.ts",
+    "test:pilot:browser": "node scripts/test-pilot-browser.cjs",
+    "pilot:setup": "node scripts/prepare-pilot.cjs",
+    "pilot:backup": "node scripts/backup-pilot.cjs --verify-restore",
+    "pilot:reconcile": "node scripts/reconcile-pilot.cjs",
+    "pilot:dev": "node scripts/run-pilot.cjs dev",
+    "pilot:build": "node scripts/run-pilot.cjs build",
+    "pilot:start": "node scripts/run-pilot.cjs start",
+    "typecheck:pilot": "tsc --noEmit --project tsconfig.pilot.json"
+  },
+  "dependencies": {
+    "next": "15.5.9",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "lucide-react": "^0.468.0",
+    "@prisma/client": "6.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^5.9.0",
+    "tailwindcss": "^4.1.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "postcss": "^8.5.0",
+    "eslint": "^9.30.0",
+    "eslint-config-next": "15.5.9",
+    "prisma": "6.19.0",
+    "vitest": "^3.2.0",
+    "@playwright/test": "^1.55.0",
+    "@eslint/eslintrc": "^3.3.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.0": true,
+    "@prisma/engines@6.19.0": true,
+    "prisma@6.19.0": true,
+    "esbuild@0.28.2": true,
+    "sharp@0.34.5": true
+  }
+}

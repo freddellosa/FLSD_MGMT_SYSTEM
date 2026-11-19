@@ -1,0 +1,1 @@
+import type {NextConfig} from 'next';const config:NextConfig={typescript:{tsconfigPath:process.env.FLSD_PILOT_BUILD==='1'?'tsconfig.pilot.json':'tsconfig.json'},distDir:process.env.FLSD_REVIEW_BUILD==='1'?'.next-review':process.env.FLSD_PILOT_BUILD==='1'?'.next-pilot':'.next'};export default config;

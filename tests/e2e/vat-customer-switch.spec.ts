@@ -1,0 +1,51 @@
+import {test, expect} from '@playwright/test';
+
+for (const mobile of [false, true]) test(`new-trip VAT customer switches preserve charges and keyboard entry (${mobile?'mobile':'desktop'})`, async ({page}, testInfo) => {
+  const errors: string[]=[];
+  page.on('pageerror', e=>errors.push(e.message));
+  await page.route('**/*', route=>{
+    const url=new URL(route.request().url());
+    if(url.origin!==new URL(testInfo.project.use.baseURL!).origin || url.pathname.startsWith('/api/'))return route.abort();
+    return route.continue();
+  });
+  await page.goto('/');await expect(page.locator('.demo-banner')).toContainText('no database');
+  await page.getByLabel('Demo role').selectOption('ADMIN');
+  await page.getByRole('navigation').getByRole('button',{name:'Customers',exact:true}).click();
+  await page.getByRole('button',{name:'Edit customer Santos Family',exact:true}).click();
+  await page.getByLabel('Customer VAT status').selectOption('VAT');await page.getByRole('button',{name:'Save customer',exact:true}).click();
+  await page.getByRole('button',{name:'Edit customer Northstar Logistics',exact:true}).click();
+  await page.getByLabel('Customer VAT status').selectOption('NON_VAT');await page.getByRole('button',{name:'Save customer',exact:true}).click();
+  if(mobile)await page.setViewportSize({width:390,height:844});
+  const trips=page.getByRole('navigation').getByRole('button',{name:'Trips',exact:true});
+  if(mobile)await page.getByRole('button',{name:'Toggle navigation',exact:true}).click();
+  await trips.click();await page.getByRole('button',{name:'New trip',exact:true}).click();
+  const dialog=page.getByRole('dialog'), customer=dialog.getByRole('combobox',{name:'Charge to / customer',exact:true});
+  await dialog.getByLabel('Destination details / stops',{exact:true}).fill('Synthetic customer-switch VAT trip');
+  const base=dialog.getByLabel('Base amount (PHP)',{exact:true});
+  await base.fill('9000');await base.press('Tab');
+  await dialog.getByLabel('OT fee (PHP)',{exact:true}).fill('1000');
+  await customer.selectOption('c4'); // Unreviewed: manual VAT is available.
+  const toggle=dialog.getByLabel('Enter VAT for this trip',{exact:true});
+  await toggle.check();await toggle.uncheck();
+  await customer.selectOption('c1');
+  await expect(toggle).toBeChecked();await expect(toggle).toBeDisabled();
+  await expect(dialog.getByLabel('VAT treatment',{exact:true})).toHaveValue('ADDED');
+  await expect(dialog.getByLabel('VAT amount (PHP)',{exact:true})).toHaveValue('1200.00');
+  await expect(base).toHaveValue('9000');
+  await dialog.getByLabel('VAT treatment',{exact:true}).selectOption('INCLUDED');
+  await customer.selectOption('c2');await expect(toggle).not.toBeChecked();
+  await expect(dialog.getByLabel('VAT amount (PHP)',{exact:true})).toHaveCount(0);
+  await customer.selectOption('c1');
+  await expect(dialog.getByLabel('VAT treatment',{exact:true})).toHaveValue('INCLUDED');
+  await expect(dialog.getByLabel('VAT amount (PHP)',{exact:true})).toHaveValue('1071.43');
+  await dialog.getByLabel('Fuel (PHP)',{exact:true}).fill('500');
+  await expect(dialog.getByLabel('Total trip amount',{exact:true})).toContainText('10,500.00');
+  const dimensions=await dialog.evaluate(el=>({width:el.clientWidth, scroll:el.scrollWidth}));
+  expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.width+2);
+  await page.screenshot({path:testInfo.outputPath('customer-switch.png'),fullPage:true});
+  const save=dialog.getByRole('button',{name:'Create demo trip',exact:true});
+  await save.focus();await page.keyboard.press('Enter');await expect(dialog).toHaveCount(0);
+  await page.getByLabel('Search trips').fill('Synthetic customer-switch VAT trip');
+  await expect(page.getByRole('table',{name:'Trip register'}).locator('tbody tr')).toContainText('10,500.00');
+  expect(errors).toEqual([]);
+});

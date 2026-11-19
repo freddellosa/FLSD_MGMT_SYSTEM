@@ -1,0 +1,35 @@
+node_modules/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+.env
+.env.*
+!.env.example
+*.log
+*.xlsx
+*.xls
+*.mdb
+*.accdb
+*.bak
+*.backup
+*.dump
+*.sql.gz
+.DS_Store
+
+# Isolated pilot cluster, generated credentials and backups
+.pilot/
+.pilot-owner-access/
+/migration-input/
+.npm-pilot-cache/
+
+.next-pilot/
+.next-review/
+
+/artifacts/
+/generated/
+/Invoice samples/
+*.tsbuildinfo
+*.pem
+*.pfx

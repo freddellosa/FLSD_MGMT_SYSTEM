@@ -1,0 +1,28 @@
+-- Initial V1 schema. Review on a disposable development database before applying.
+CREATE TYPE "StaffRole" AS ENUM ('OWNER','ADMIN','BILLING','OPERATIONS','VIEWER');
+CREATE TYPE "InvoiceState" AS ENUM ('DRAFT','PRINT_PENDING','PRINTED','CANCELLED','SPOILED');
+CREATE TYPE "SoaState" AS ENUM ('DRAFT','ISSUED','CANCELLED');
+CREATE TYPE "PaymentState" AS ENUM ('RECORDED','VOIDED');
+CREATE TYPE "ImportState" AS ENUM ('VALIDATED','APPLIED','REJECTED');
+CREATE TABLE "StaffUser" ("id" UUID PRIMARY KEY, "email" TEXT NOT NULL UNIQUE, "displayName" TEXT NOT NULL, "passwordHash" TEXT NOT NULL, "role" "StaffRole" NOT NULL DEFAULT 'VIEWER', "active" BOOLEAN NOT NULL DEFAULT true, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Customer" ("id" UUID PRIMARY KEY, "name" TEXT NOT NULL, "normalizedName" TEXT NOT NULL UNIQUE, "tin" TEXT, "billingAddress" TEXT, "includeInManagementRevenue" BOOLEAN NOT NULL DEFAULT true, "active" BOOLEAN NOT NULL DEFAULT true, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "Vehicle" ("id" UUID PRIMARY KEY, "plateNumber" TEXT NOT NULL UNIQUE, "description" TEXT NOT NULL, "active" BOOLEAN NOT NULL DEFAULT true);
+CREATE TABLE "Driver" ("id" UUID PRIMARY KEY, "name" TEXT NOT NULL, "employeeCode" TEXT UNIQUE, "active" BOOLEAN NOT NULL DEFAULT true);
+CREATE TABLE "Trip" ("id" UUID PRIMARY KEY, "legacyTripId" TEXT UNIQUE, "tripStart" TIMESTAMP(3) NOT NULL, "tripEnd" TIMESTAMP(3), "customerId" UUID NOT NULL REFERENCES "Customer"("id"), "vehicleId" UUID REFERENCES "Vehicle"("id"), "driverId" UUID REFERENCES "Driver"("id"), "passengerName" TEXT, "origin" TEXT, "destination" TEXT, "serviceType" TEXT, "tripStatus" TEXT, "chargeAmount" DECIMAL(18,2) NOT NULL, "vatAmount" DECIMAL(18,2), "withholdingAmount" DECIMAL(18,2), "legacySoaNumber" TEXT, "legacyPayload" JSONB, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE INDEX "Trip_tripStart_idx" ON "Trip"("tripStart");
+CREATE INDEX "Trip_customerId_tripStart_idx" ON "Trip"("customerId","tripStart");
+CREATE TABLE "StatementOfAccount" ("id" UUID PRIMARY KEY, "soaNumber" TEXT NOT NULL UNIQUE, "customerId" UUID NOT NULL REFERENCES "Customer"("id"), "status" "SoaState" NOT NULL DEFAULT 'DRAFT', "issuedAt" TIMESTAMP(3), "legacyStatus" TEXT, "poNumber" TEXT, "department" TEXT, "requestor" TEXT, "site" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE TABLE "SoaTrip" ("soaId" UUID NOT NULL REFERENCES "StatementOfAccount"("id"), "tripId" UUID NOT NULL REFERENCES "Trip"("id"), "amountAtBilling" DECIMAL(18,2) NOT NULL, PRIMARY KEY("soaId","tripId"));
+CREATE INDEX "SoaTrip_tripId_idx" ON "SoaTrip"("tripId");
+CREATE TABLE "OfficialInvoice" ("id" UUID PRIMARY KEY, "soaId" UUID NOT NULL REFERENCES "StatementOfAccount"("id"), "customerId" UUID NOT NULL REFERENCES "Customer"("id"), "serialNumber" TEXT UNIQUE, "state" "InvoiceState" NOT NULL DEFAULT 'DRAFT', "invoiceDate" TIMESTAMP(3), "printedAt" TIMESTAMP(3), "cancelledAt" TIMESTAMP(3), "cancellationReason" TEXT, "replacedInvoiceId" UUID UNIQUE REFERENCES "OfficialInvoice"("id"), "grossAmount" DECIMAL(18,2) NOT NULL, "vatAmount" DECIMAL(18,2) NOT NULL, "withholdingAmount" DECIMAL(18,2) NOT NULL DEFAULT 0, "legacyInvoiceNumber" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL);
+CREATE INDEX "OfficialInvoice_soaId_state_idx" ON "OfficialInvoice"("soaId","state");
+-- Database-level protection against concurrent active invoices for the same SOA.
+CREATE UNIQUE INDEX "one_active_invoice_per_soa" ON "OfficialInvoice"("soaId") WHERE "state" IN ('DRAFT','PRINT_PENDING','PRINTED');
+CREATE TABLE "InvoiceSerialBatch" ("id" UUID PRIMARY KEY, "startSerial" BIGINT NOT NULL, "endSerial" BIGINT NOT NULL, "deletedAt" TIMESTAMP(3), "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, CONSTRAINT "valid_serial_range" CHECK ("startSerial" > 0 AND "endSerial" >= "startSerial"));
+CREATE INDEX "InvoiceSerialBatch_startSerial_endSerial_idx" ON "InvoiceSerialBatch"("startSerial","endSerial");
+CREATE TABLE "Payment" ("id" UUID PRIMARY KEY, "customerId" UUID NOT NULL REFERENCES "Customer"("id"), "receivedAt" TIMESTAMP(3) NOT NULL, "amount" DECIMAL(18,2) NOT NULL, "reference" TEXT, "paymentMethod" TEXT, "state" "PaymentState" NOT NULL DEFAULT 'RECORDED', "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE TABLE "PaymentAllocation" ("paymentId" UUID NOT NULL REFERENCES "Payment"("id"), "invoiceId" UUID NOT NULL REFERENCES "OfficialInvoice"("id"), "amount" DECIMAL(18,2) NOT NULL, "withheldTax" DECIMAL(18,2) NOT NULL DEFAULT 0, PRIMARY KEY("paymentId","invoiceId"));
+CREATE TABLE "AuditEvent" ("id" UUID PRIMARY KEY, "actorId" UUID REFERENCES "StaffUser"("id"), "action" TEXT NOT NULL, "entityType" TEXT NOT NULL, "entityId" TEXT NOT NULL, "before" JSONB, "after" JSONB, "reason" TEXT, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX "AuditEvent_entityType_entityId_createdAt_idx" ON "AuditEvent"("entityType","entityId","createdAt");
+CREATE TABLE "ImportBatch" ("id" UUID PRIMARY KEY, "sourceName" TEXT NOT NULL, "sourceSha256" TEXT NOT NULL, "status" "ImportState" NOT NULL DEFAULT 'VALIDATED', "acceptedRows" INTEGER NOT NULL DEFAULT 0, "rejectedRows" INTEGER NOT NULL DEFAULT 0, "report" JSONB, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE("sourceName","sourceSha256"));
+CREATE SEQUENCE IF NOT EXISTS flsd_soa_number_seq START WITH 1 INCREMENT BY 1;
